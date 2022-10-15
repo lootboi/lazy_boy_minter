@@ -1,4 +1,3 @@
-from pickletools import decimalnl_long
 import click
 import os
 import collections
@@ -8,7 +7,7 @@ import time
 from eth_account    import Account
 from web3           import Web3
 from dotenv         import load_dotenv
-from joepeg_abi     import FLATLAUNCHPEG_ABI
+from joepeg_abi     import JOEPEG_ABI
 from colorama       import Fore, Back, Style
 from utils          import print_banner
 
@@ -188,10 +187,11 @@ print(Fore.BLUE + ('JoePeg Contract Address: ' + mint_address))
 # NOTE:
 # This for function creates a unique contract object using all of the w3 instances
 # This is done so that we can call the contract functions using each different Node + Signer
+
 contract = []
 def configure_contract():
     for i in range(len(w3)):
-        contract.append(w3[i].eth.contract(address=mint_address, abi=FLATLAUNCHPEG_ABI))
+        contract.append(w3[i].eth.contract(address=mint_address, abi=JOEPEG_ABI))
         print(Fore.YELLOW + ('Contract with Node #' + str(i + 1) + ' configured ✓'))
 
 configure_contract()
@@ -211,6 +211,7 @@ print()
 # If the user enters "no", then the script will exit
 # IMPORTANT: It is very easy to get rate limited if you start scanning too early
 # I recommend waiting until the sale is about to start to start scanning
+
 def start_scan():
     print(Fore.WHITE + ('Would you like to start scanning for JoePegs? (Enter yes/no)'))
     continue_script = input()

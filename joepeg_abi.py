@@ -1,4 +1,4 @@
-FLATLAUNCHPEG_ABI = """
+JOEPEG_ABI = """
 [
    {
       "inputs":[

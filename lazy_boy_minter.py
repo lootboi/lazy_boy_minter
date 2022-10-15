@@ -25,6 +25,7 @@ load_dotenv()
 
 # NOTE: 
 # Function to prompt whether or not to start the script
+
 def start_script():
     print('Are you ready to mint? (Enter yes/no)')
     start = input()
@@ -60,9 +61,9 @@ LazyBoy = collections.namedtuple('LazyBoy', [
 ])
 
 LazyBoyz = (
-    LazyBoy(private_key=os.getenv("LAZY_WALLET_ONE")),
-    LazyBoy(private_key=os.getenv("LAZY_WALLET_TWO")),
-    LazyBoy(private_key=os.getenv("LAZY_WALLET_THREE")),
+    LazyBoy(private_key=os.getenv("LAZY_BOY_ONE")),
+    LazyBoy(private_key=os.getenv("LAZY_BOY_TWO")),
+    LazyBoy(private_key=os.getenv("LAZY_BOY_THREE")),
 )
 
 Node = collections.namedtuple('Nodes', [
@@ -115,6 +116,7 @@ print()
 # This serves as a test to see that all of signers are configured correctly
 # We use each signer to call the current block of the network
 # If isConnected() returns true, then we know that the signer is configured correctly
+
 def test_nodes():
     for i in range(len(w3)):
         block = w3[i].eth.get_block_number

@@ -3,6 +3,7 @@ import os
 import collections
 import multiprocessing
 import time
+import asyncio
 
 from eth_account    import Account
 from web3           import Web3
@@ -137,7 +138,8 @@ print()
 
 # NOTE:
 # This function checks the balance of each Lazy Boy wallet and prints the results
-# If the balance is 0, then the user is prompted to add funds to the wallet
+# If the balance is 0, then the user is prompted to add funds to the wallet then check again or continue
+# (This is to prevent the user from accidentally minting with an empty wallet and useful for testing the script)
 
 def check_balances():
     unfunded = 0
@@ -146,30 +148,28 @@ def check_balances():
         balance = w3[i].eth.get_balance(accounts[i].address)
         print(Fore.YELLOW + ('Checking balance of Lazy Boy #' + str(i + 1) + ': '))
         if(balance == 0):
-            print(Fore.RED + ('Wallet is empty'))
             unfunded = unfunded + 1
+            print(Fore.RED + ('Wallet is empty'))
+            print()
         if(balance > 0):
             funded = funded + 1
-        if(balance == 0):
-            unfunded = unfunded + 1
-            print(Fore.RED + ('Lazy Boy #' + str(i + 1) + ' has a balance of 0'))
-            print(Fore.RED + ('Please add funds to use this wallet'))
         if(balance != 0):
             funded = funded + 1
             print(Fore.GREEN + ('Lazy Boy #' + str(i + 1) + ' has a balance of ' + str(w3[i].fromWei(balance, 'ether')) + ' AVAX'))
             print()
     print(Fore.BLUE + ('Lazy Boy wallet balances checked ✓'))
     if(unfunded > 0):
-        print(Fore.RED + (str(unfunded) + ' of your Lazy Boyz are unfunded, would you like to continue? (Enter yes/no)'))
+        print(Fore.RED + (str(unfunded) + ' of your Lazy Boyz are unfunded, would you like to fund it/them or continue? (Enter fund/cont)'))
         continue_script = input()
-        if continue_script == 'no':
-            print(Fore.DIM + ('Goodbye!'))
-            exit()
-        elif continue_script == 'yes':
+        if continue_script == 'fund':
             print()
-        else:
-            print(Fore.DIM + ('Please enter "yes" or "no"'))
+            print(Fore.WHITE + ('Type anything once you have funded your wallet(s)'))
+            funded = input()
+            print()
+            print(Fore.BLUE + ('Checking Wallet balances again...'))
             check_balances()
+        elif continue_script == 'cont':
+            print()
     if(unfunded == 0):
         print(Fore.BLUE + ('All of your Lazy Boyz are funded!'))
 
@@ -207,12 +207,46 @@ print()
     #    4. Scan for Start     #
     ############################
 
+#NOTE:
+# This function is used to tell the script what to do once the 'Initialized' 
+# event is found in the latest block. It notifies the user that the sale has started
+# and then calls the mint function
+
+def handle_event():
+    print(Fore.BLUE + ('JoePeg Sale Started ✓'))
+    # mint()
+
+# NOTE:
+# This function is used to scan for the 'Initialized' event in the latest block
+# If the event is found, then the handle_event() function is called
+
+async def log_loop(event_filter, poll_interval):
+    while True:
+        for Initialized in event_filter.get_new_entries():
+            handle_event(Initialized)
+        await asyncio.sleep(poll_interval)
+
+# NOTE:
+# This function is used to create a filter for the 'Initialized' event
+# It then calls the log_loop() function to scan for the event
+
+def scan():
+    for i in range(len(contract)):
+        event_filter = contract[i].events.Initialized.createFilter(fromBlock='latest')
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(
+                asyncio.gather(
+                    log_loop(event_filter, 0.1)))
+        finally:
+            loop.close()
+
 # NOTE:
 # This function just asks the user if they want to start scanning for the start of the sale
 # If the user enters "yes", then the script will continue and eventually mint using each Lazy Boy
 # If the user enters "no", then the script will exit
 # IMPORTANT: It is very easy to get rate limited if you start scanning too early
-# I recommend waiting until the sale is about to start to start scanning
+# I recommend waiting until the sale is about to begin to start scanning
 
 def start_scan():
     print(Fore.WHITE + ('Would you like to start scanning for JoePegs? (Enter yes/no)'))
@@ -222,6 +256,8 @@ def start_scan():
         exit()
     elif continue_script == 'yes':
         print()
+        print(Fore.BLUE + ('Starting to scan for JoePegs...'))
+        scan()
     else:
         print('Please enter "yes" or "no"')
         start_scan()
@@ -231,28 +267,8 @@ start_scan()
 print(Fore.YELLOW + ('Starting to scan for JoePegs...'))
 print()
 
-# NOTE: THIS IS AI GENERATED CODE (MUST EDIT)
-# This is how the script will scan for the start of the sale
-# The script will continue to scan until until the sale has started
-# Once the sale has started, the script will stop scanning and beginn to propogate transactions
-
-def scan():
-    while True:
-        try:
-            sale_status = contract[0].functions.saleIsActive().call()
-            if(sale_status == True):
-                print(Fore.GREEN + ('JoePeg Sale has started!'))
-                print()
-            if(sale_status == False):
-                print(Fore.RED + ('JoePeg Sale has not started yet'))
-                print()
-                time.sleep(1)
-        except:
-            print(Fore.RED + ('JoePeg Sale has not started yet'))
-            print()
-            time.sleep(1)
-
-scan()
+# NOTE:
+# These next 3 functions are used to actually scan for the start of the sale
 
 
     ######################
@@ -262,6 +278,7 @@ scan()
 
 # NOTE:
 # Now that the sale has started, we can begin to mint using each Lazy Boy and signer
-
+def mint():
+    print(Fore.BLUE + ('Minting JoePegs...'))
 
 

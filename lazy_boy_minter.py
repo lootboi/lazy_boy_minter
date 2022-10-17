@@ -1,14 +1,14 @@
 import os
 import collections
 import asyncio
+import textwrap
 
 from eth_account    import Account
 from web3           import Web3
 from dotenv         import load_dotenv
 from joepeg_abi     import JOEPEG_ABI
 from colorama       import Fore, Back, Style
-from utils          import print_banner
-
+from utils          import print_banner, dim_text
 def dim(text):
      print(Fore.DIM + text)
 
@@ -105,8 +105,9 @@ for i in range(len(w3)):
         signers.append(w3[i].eth.account.signTransaction)
         signer_count = signer_count + 1
 
-print(Fore.BLUE + ('Configured Signers Successfully ✓'))
-print(Fore.BLUE + ('Testing RPC Nodes...'))
+print(Fore.BLUE + 'Configured ' + str(signer_count) + ' Signers Successfully ✓')
+print()
+print(Fore.YELLOW + ('Testing RPC Nodes...'))
 print()
 
 
@@ -115,67 +116,85 @@ print()
 # We use each signer to call the current block of the network
 # If isConnected() returns true, then we know that the signer is configured correctly
 
-def test_nodes():
-    for i in range(len(w3)):
-        block = w3[i].eth.get_block_number
-        print(Fore.YELLOW + ('Testing Node: #' + str(i + 1)))
-        if(w3[i].isConnected()):
-            print(Fore.GREEN + ('Node #' + str(i + 1) + ' is connected ✓'))
-        if(w3[i].isConnected() == False):
-            print(Fore.RED + ('Node #' + str(i + 1) + ' is not connected'))
-            print(Fore.RED + ('Please check your RPC Node settings'))
-            exit()
-        print()
+# NOTE:
+# This function takes all of the nodes and tests to see if they are connected
+# All of the nodes are then put into an ascii table along with their status
+# If they are connected, then we know that the signer is configured correctly
+# If they are not connected, then we know that the signer is not configured correctly
 
+def test_nodes():
+    connected = 0
+    disconnected = 0
+    print(Fore.YELLOW + ' ________________________________________________________')
+    print(Fore.YELLOW + '|========================================================|')
+    print(Fore.YELLOW + '|======================== ' + Fore.BLUE + 'Nodes' + Fore.YELLOW + ' =========================|')
+    print(Fore.YELLOW + '|========================================================|')
+    print(Fore.YELLOW + '|' + Fore.BLUE + '        Node Address' + Fore.YELLOW + '        |' + Fore.BLUE + '           Status' + Fore.YELLOW + '          |')
+    print(Fore.YELLOW + '|========================================================|')
+    for i in range(len(Nodes)):
+        if(w3[i].isConnected()):
+            connected = connected + 1
+            print(Fore.YELLOW + '| ' + Style.RESET_ALL + '         Node #' + str(i + 1) + Fore.YELLOW + '           |' + Fore.GREEN + '         Connected' + Fore.YELLOW + '         |')
+            print(Fore.YELLOW + '|========================================================|')
+        if(w3[i].isConnected() == False):
+            disconnected = disconnected + 1
+            print(Fore.YELLOW + '| ' + Style.RESET_ALL + '         Node #' + str(i + 1) + Fore.YELLOW + '           |' + Fore.RED + '        Not Connected' + Fore.YELLOW + '      |')
+            print(Fore.YELLOW + '|========================================================|')
+    print(Fore.YELLOW + '|' + Fore.BLUE + ' Nodes Connected: ' + Fore.YELLOW + str(connected) + '                                     |')
+    print(Fore.YELLOW + '|--------------------------------------------------------|')
+    print(Fore.YELLOW + '|' + Fore.BLUE + ' Nodes Disconnected: ' + Fore.YELLOW + str(disconnected) + '                                  |')
+    print(Fore.YELLOW + '|========================================================|')
+    print()
+    if disconnected > 0:
+        print(Fore.RED + ('Please check your RPC Nodes and try again'))
+        exit()
 test_nodes()
 
 print(Fore.BLUE + ('Testing RPC Nodes Successful ✓'))
-print(Fore.BLUE + ('Checking Lazy Boy wallet balances...'))
+print()
+print(Fore.YELLOW + ('Checking Lazy Boy wallet balances...'))
 print()
 
 # NOTE:
-# This function checks the balance of each Lazy Boy wallet and prints the results
+# This function checks the balance of each Lazy Boy wallet and prints the results in an ASCII table
 # If the balance is 0, then the user is prompted to add funds to the wallet then check again or continue
 # (This is to prevent the user from accidentally minting with an empty wallet and useful for testing the script)
 
-def check_balances():
-    unfunded = 0
+def print_wallet_balances():
     funded = 0
+    unfunded = 0
+    print(Fore.YELLOW + ' ______________________________________________________________')
+    print('|==============================================================|')
+    print('|====================== ' + Style.RESET_ALL + Fore.BLUE + 'Wallet Balances' + Style.RESET_ALL + Fore.YELLOW + ' =======================|')
+    print('|==============================================================|')
+    print('|               ' + Style.RESET_ALL + Fore.BLUE + 'Wallet Address' + Style.RESET_ALL + Fore.YELLOW + '               | ' + Style.RESET_ALL + Fore.BLUE + '    Balance' + Style.RESET_ALL + Fore.YELLOW + '     |')
+    print('|==============================================================|')
     for i in range(len(accounts)):
-        balance = w3[i].eth.get_balance(accounts[i].address)
-        print(Fore.YELLOW + ('Checking balance of Lazy Boy #' + str(i + 1) + ': '))
-        if(balance == 0):
+        if w3[i].eth.get_balance(accounts[i].address) == 0:
             unfunded = unfunded + 1
-            print(Fore.RED + ('Wallet is empty'))
-            print()
-        if(balance > 0):
+            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.RED + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '      |')
+            print('|==============================================================|')
+        else:
             funded = funded + 1
-        if(balance != 0):
-            funded = funded + 1
-            print(Fore.GREEN + ('Lazy Boy #' + str(i + 1) + ' has a balance of ' + str(w3[i].fromWei(balance, 'ether')) + ' AVAX'))
-            print()
-    print(Fore.BLUE + ('Lazy Boy wallet balances checked ✓'))
-    if(unfunded > 0):
-        print(Fore.RED + (str(unfunded) + ' of your Lazy Boyz are unfunded, would you like to fund it/them or continue? (Enter fund/cont)'))
-        continue_script = input()
-        if continue_script == 'fund':
-            print()
-            print(Fore.WHITE + ('Type anything once you have funded your wallet(s)'))
-            funded = input()
-            print()
-            print(Fore.BLUE + ('Checking Wallet balances again...'))
-            check_balances()
-        elif continue_script == 'cont':
-            print()
-    if(unfunded == 0):
-        print(Fore.BLUE + ('All of your Lazy Boyz are funded!'))
-
-check_balances()
+            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.GREEN + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '      |')
+            print('|==============================================================|')
+    print(Fore.YELLOW + '| ' + Fore.BLUE + 'Funded Wallets: ' + Fore.YELLOW + str(funded) + '                                            |')
+    print(Fore.YELLOW + '|--------------------------------------------------------------|')
+    print(Fore.YELLOW + '| ' + Fore.BLUE + 'Unfunded Wallets: ' + Fore.YELLOW + (str(unfunded)) + '                                          |')
+    print(Fore.YELLOW + '|==============================================================|')
+    if unfunded > 0:
+        print(Fore.RED + ('You have unfunded wallets!'))
+        print(Fore.RED + ('Please add funds to your wallets or remove the unfunded wallets from the LazyBoyz list'))
+        exit()
+    if unfunded == 0:
+        print()
+        print(Fore.BLUE + ('All wallets are funded ✓'))  
+             
+print_wallet_balances()
 
 print()
 print(Fore.YELLOW + ('Starting to configure JoePeg Contract...'))
 print()
-print(Fore.BLUE + ('JoePeg Contract Address: ' + mint_address))
 
 
     ############################
@@ -189,9 +208,16 @@ print(Fore.BLUE + ('JoePeg Contract Address: ' + mint_address))
 
 contract = []
 def configure_contract():
+    print(Fore.YELLOW + ' ________________________________________________')
+    print(Fore.YELLOW + '|================================================|')
+    print(Fore.YELLOW + '|================== ' + Fore.BLUE + 'Contracts' + Fore.YELLOW + ' ===================|')
+    print(Fore.YELLOW + '|================================================|')
+    print(Fore.YELLOW + '|   ' + Fore.BLUE + mint_address + Fore.YELLOW + '   |')
+    print(Fore.YELLOW + '|================================================|')
     for i in range(len(w3)):
         contract.append(w3[i].eth.contract(address=mint_address, abi=JOEPEG_ABI))
-        print(Fore.YELLOW + ('Contract with Node #' + str(i + 1) + ' configured ✓'))
+        print(Fore.YELLOW + '|' + Fore.WHITE + ' Contract #' + str(i + 1) + Fore.YELLOW + ' | ' + Fore.GREEN + '           Configured ✓' + Fore.YELLOW + '          |')
+        print(Fore.YELLOW + '|================================================|')
 
 configure_contract()
 

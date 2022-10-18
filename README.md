@@ -9,6 +9,8 @@ The script requires 3 main components in order to be successful:
 2. **Nodes** - RPC http endpoints for the Avalanche (or Fuji) networks
 3. **Contract** - The address of the Launchpeg contract that you wish to bot
 
+![Spread your Seed](img/propagate.png)
+
 The core strategy of this bot is taken from [@twitt_tr's](https://twitter.com/twitt_tr) (tactical_retreat) Substack article, [Building an (advanced) NFT bot](https://tacticalretreat.substack.com/p/building-an-advanced-nft-bot). In it, they describe a strategy which they dub 'propagating'. This is the Lazy Boyz strategy in beating out other bots and manual users still clicking buttons (they never stood a chance anyway). 
 
 Propagating, as I assume it's name was taken from, is like planting as many seeds as possible and hoping that just a handful, or one, make it to blooom. In this script, our seeds are our transactions that we send in an attempt to mint. The network, our soil, and RPC nodes our trowels. By spamming the mint() function as many times as possible, to as many different nodes as possible, we are spreading *ahem* spreading our seed as wide as possible. Giving us a higher probability that one, or multiple, of our mint transactions actually land on-chain.

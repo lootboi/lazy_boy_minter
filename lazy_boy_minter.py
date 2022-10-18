@@ -1,43 +1,21 @@
+import multiprocessing
 import os
 import collections
 import asyncio
 import textwrap
 
+from multiprocessing import Process
 from eth_account    import Account
 from web3           import Web3
 from dotenv         import load_dotenv
 from joepeg_abi     import JOEPEG_ABI
 from colorama       import Fore, Back, Style
 from utils          import print_banner, dim_text
+
 def dim(text):
      print(Fore.DIM + text)
 
 load_dotenv()
-
-    ########################
-    #   Prompt Functions   #
-    ########################
-
-# NOTE:
-# All of the following functions are simply to prompt te user for some type of input
-
-# NOTE: 
-# Function to prompt whether or not to start the script
-
-def start_script():
-    print('Are you ready to mint? (Enter yes/no)')
-    start = input()
-    if start == 'no':
-        print(Fore.DIM + ('Goodbye!'))
-        exit()
-    elif start == 'yes':
-        print()
-    else:
-        print(Fore.DIM + ('Please enter "yes" or "no"'))
-        start_script()
-
-# NOTE:
-
 
     ########################
     #   1. Initial Setup   #
@@ -51,6 +29,11 @@ def start_script():
 # NOTE: 
 # If you have more/less accounts/Nodes, you can adjust as needed
 # Just add or remove the appropriate number of variables in LazyBoyz and Nodes
+# EXAMPLE - ADDING AN ACCOUNT/NODE:
+# LazyBoy:
+# LazyBoy(private_key=os.getenv(<PRIVATE_KEY_NAME>))
+# Nodes:
+# Node(os.getenv(<NODE_ADDRESS_NAME>))
 
 mint_address = os.getenv("JOEPEG_ADDRESS")
 
@@ -74,12 +57,26 @@ Nodes = (
     Node(address=os.getenv("RPC_THREE")),
     Node(address=os.getenv("RPC_FOUR")),
     Node(address=os.getenv("RPC_FIVE")),
+    Node(address=os.getenv("RPC_SIX")),
 )
+
+# NOTE:
+# This function is only used to start the script by asking the user whether they want to mint or not
+def start_script():
+    print('Are you ready to mint? (Enter yes/no)')
+    start = input()
+    if start == 'no':
+        print(Fore.DIM + ('Goodbye!'))
+        exit()
+    elif start == 'yes':
+        print()
+    else:
+        print(Fore.DIM + ('Please enter "yes" or "no"'))
+        start_script()
 
 print_banner()
 print()
 start_script()
-
 
     ############################
     #   2. Connect to Web3     #
@@ -94,33 +91,49 @@ print()
 # 1. Each node is used to create seperate web3 connections and is stored in web3s
 # 2. Each Private Key is used to create an account and is stored in accounts
 
+# w3 = an instance of each web3 connection
 w3 = [Web3(Web3.HTTPProvider(node.address)) for node in Nodes]
+# accounts =  an in instance of each account
 accounts = [Account.from_key(lazy.private_key) for lazy in LazyBoyz]
+# signers  = an instance of each signer built using accounts & w3
 signers = []
 
-signer_count = 0
+def get_signers():
+    signer_count = 0
+    for i in range(len(w3)):
+        for i in range(len(accounts)):
+            signers.append(w3[i].eth.account.signTransaction)
+            signer_count = signer_count + 1
+    print(Fore.GREEN + ('All Lazy Boyz Configured ✓'))
+    print()
+    print(Fore.BLUE + 'Configured ' + str(signer_count) + ' Signers Successfully ✓')
+    print()
+    print(Fore.YELLOW + ('Testing RPC Nodes...'))
+    print()
 
-for i in range(len(w3)):
-    for i in range(len(accounts)):
-        signers.append(w3[i].eth.account.signTransaction)
-        signer_count = signer_count + 1
-
-print(Fore.BLUE + 'Configured ' + str(signer_count) + ' Signers Successfully ✓')
-print()
-print(Fore.YELLOW + ('Testing RPC Nodes...'))
-print()
+get_signers()
 
 
 # NOTE:
 # This serves as a test to see that all of signers are configured correctly
-# We use each signer to call the current block of the network
 # If isConnected() returns true, then we know that the signer is configured correctly
 
-# NOTE:
-# This function takes all of the nodes and tests to see if they are connected
-# All of the nodes are then put into an ascii table along with their status
-# If they are connected, then we know that the signer is configured correctly
-# If they are not connected, then we know that the signer is not configured correctly
+# FUNCTION WITHOUT ASCII TABLE:
+# This is a lot easier to read than the actual function used-But it doesn't look as cool
+# If you are trying to use this script as a guide, the following function is a lot easier to read
+# 
+# def test_nodes():
+#     connected = 0
+#     disconnected = 0
+#     for i in range(len(Nodes)):
+#         if w3[i].isConnected():
+#             connected = connected + 1
+#         else:
+#             disconnected = disconnected + 1
+#     if disconnected > 0:
+#         print(Fore.RED + 'Disconnected Nodes: ' + str(disconnected))
+#     if connected == len(Nodes):
+#         print(Fore.GREEN + 'All Nodes Connected ✓')
 
 def test_nodes():
     connected = 0
@@ -131,7 +144,7 @@ def test_nodes():
     print(Fore.YELLOW + '|========================================================|')
     print(Fore.YELLOW + '|' + Fore.BLUE + '        Node Address' + Fore.YELLOW + '        |' + Fore.BLUE + '           Status' + Fore.YELLOW + '          |')
     print(Fore.YELLOW + '|========================================================|')
-    for i in range(len(Nodes)):
+    for i in range(len(w3)):
         if(w3[i].isConnected()):
             connected = connected + 1
             print(Fore.YELLOW + '| ' + Style.RESET_ALL + '         Node #' + str(i + 1) + Fore.YELLOW + '           |' + Fore.GREEN + '         Connected' + Fore.YELLOW + '         |')
@@ -148,17 +161,42 @@ def test_nodes():
     if disconnected > 0:
         print(Fore.RED + ('Please check your RPC Nodes and try again'))
         exit()
-test_nodes()
+    if connected == len(Nodes):
+        print(Fore.GREEN + 'All Nodes Connected ✓')
+        print()
+        print(Fore.BLUE + ('Tested RPC Nodes Successfully ✓'))
+        print()
+        print(Fore.YELLOW + ('Checking Lazy Boy wallet balances...'))
+        print()
 
-print(Fore.BLUE + ('Testing RPC Nodes Successful ✓'))
-print()
-print(Fore.YELLOW + ('Checking Lazy Boy wallet balances...'))
-print()
+
+test_nodes()
 
 # NOTE:
 # This function checks the balance of each Lazy Boy wallet and prints the results in an ASCII table
 # If the balance is 0, then the user is prompted to add funds to the wallet then check again or continue
 # (This is to prevent the user from accidentally minting with an empty wallet and useful for testing the script)
+
+# FUNCTION WITHOUT ASCII TABLE:
+# This is a lot easier to read than the actual function used-But it doesn't look as cool
+# If you are trying to use this script as a guide, the following function is a lot easier to read
+
+# def print_wallet_balances():
+#     funded = 0
+#     unfunded = 0
+#     for i in range(len(accounts)):
+#         if w3[i].eth.getBalance(accounts[i].address) > 0:
+#             funded = funded + 1
+#         else:
+#             unfunded = unfunded + 1
+#     if unfunded > 0:
+#         print(Fore.RED + 'Unfunded Wallets: ' + str(unfunded))
+#         print(Fore.RED + ('Please add funds to your wallets or remove the unfunded wallets from the LazyBoyz list'))
+#         exit()
+#     if funded == len(accounts):
+#         print(Fore.GREEN + 'All Wallets Funded ✓')
+#         print()
+#         print(Fore.YELLOW + ('Starting to configure JoePeg Contract...'))
 
 def print_wallet_balances():
     funded = 0
@@ -188,13 +226,13 @@ def print_wallet_balances():
         exit()
     if unfunded == 0:
         print()
-        print(Fore.BLUE + ('All wallets are funded ✓'))  
+        print(Fore.GREEN + ('All wallets are funded ✓'))  
+        print()
+        print(Fore.BLUE + 'Checked Balances Successfully ✓')
+        print()
+        print(Fore.YELLOW + ('Starting to configure JoePeg Contract...'))
              
 print_wallet_balances()
-
-print()
-print(Fore.YELLOW + ('Starting to configure JoePeg Contract...'))
-print()
 
 
     ############################
@@ -208,22 +246,16 @@ print()
 
 contract = []
 def configure_contract():
-    print(Fore.YELLOW + ' ________________________________________________')
-    print(Fore.YELLOW + '|================================================|')
-    print(Fore.YELLOW + '|================== ' + Fore.BLUE + 'Contracts' + Fore.YELLOW + ' ===================|')
-    print(Fore.YELLOW + '|================================================|')
-    print(Fore.YELLOW + '|   ' + Fore.BLUE + mint_address + Fore.YELLOW + '   |')
-    print(Fore.YELLOW + '|================================================|')
     for i in range(len(w3)):
         contract.append(w3[i].eth.contract(address=mint_address, abi=JOEPEG_ABI))
-        print(Fore.YELLOW + '|' + Fore.WHITE + ' Contract #' + str(i + 1) + Fore.YELLOW + ' | ' + Fore.GREEN + '           Configured ✓' + Fore.YELLOW + '          |')
-        print(Fore.YELLOW + '|================================================|')
+    print()
+    print(Fore.GREEN + ('JoePeg Contract Configured ✓'))
+    print()
+    print(Fore.BLUE + ('Created ' + str(len(w3) + 1) + ' Contract instances Successfully ✓'))
+    print()
 
 configure_contract()
 
-print()
-print(Fore.BLUE + ('JoePeg Contract Configured ✓'))
-print()
 
 
     ############################
@@ -287,12 +319,6 @@ def start_scan():
 
 start_scan()
 
-print(Fore.YELLOW + ('Starting to scan for JoePegs...'))
-print()
-
-# NOTE:
-# These next 3 functions are used to actually scan for the start of the sale
-
 
     ######################
     #      5. Mint!      #
@@ -303,5 +329,6 @@ print()
 # Now that the sale has started, we can begin to mint using each Lazy Boy and signer
 def mint():
     print(Fore.BLUE + ('Minting JoePegs...'))
+
 
 

@@ -1,7 +1,7 @@
 # Lazy Boy Minter 💤
 Minting is fun until you realize you're competing against scripts. If you can't beat 'em, join 'em. *beep boop bop*
 
-![This is a Lazy Boy](img/sleepy_boy.png)
+![Lazy Boy Banner](img/lazy_banner.png)
 
 ## How does it work?
 The script requires 3 main components in order to be successful:

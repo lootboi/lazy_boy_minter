@@ -13,7 +13,7 @@ The script requires 3 main components in order to be successful:
 
 The core strategy of this bot is taken from [@twitt_tr's](https://twitter.com/twitt_tr) (tactical_retreat) Substack article, [Building an (advanced) NFT bot](https://tacticalretreat.substack.com/p/building-an-advanced-nft-bot). In it, they describe a strategy which they dub 'propagating'. This is the Lazy Boyz strategy in beating out other bots and manual users still clicking buttons (they never stood a chance anyway). 
 
-Propagating, as I assume it's name was taken from, is like planting as many seeds as possible and hoping that just a handful, or one, make it to blooom. In this script, our seeds are our transactions that we send in an attempt to mint. The network, our soil, and RPC nodes our trowels. By spamming the mint() function as many times as possible, to as many different nodes as possible, we are spreading *ahem* spreading our seed as wide as possible. Giving us a higher probability that one, or multiple, of our mint transactions actually land on-chain.
+Propagating, as I assume it's name was taken from, is like planting as many seeds as possible and hoping that just a handful, or one, make it to blooom. In this script, our seeds are our transactions that we send in an attempt to mint. The network, our soil, and RPC nodes our trowels. By spamming the mint() function as many times as possible, to as many different nodes as possible, we are *ahem* spreading our seed as wide as possible. Giving us a higher probability that one, or multiple, of our mint transactions actually land on-chain.
 
 For even better probability, one could configure as many different RPC nodes and wallets that they could afford to fund and create an even bigger net than the one the Lazy Boyz cast. 
 
@@ -67,6 +67,16 @@ Once you have made sure that everything has been configured using the above step
 **OR** you can use the "Run without Debugging" option if you are using VSCode
 
 Once started, the user will be prompted to answer whether or not they are ready to start minting. Once ```yes``` is input, the script will begin initial configuration. 
+
+If the configuration is successful, you should first see a table showing all of the RPC connections that the script was able to make:
+
+![Successful Node Configuration](./img/rpc_table.png)
+
+If the script was not able to cnnect to any of the RPC URL's that you provide, you will get an error message prompting you to check that you have configured it correctly within the script-as well as that it is currently operating.
+
+After successfully checking the RPC connections, the script will continue to check the balance of each wallet that was provided. If all of the wallets are funded, you will see a table similar to this:
+
+![Successful Wallet Balance Check](./img/wallet_table.PNG)
 
 After the script has verified that all information provided was integrated, wallets are funded, and each RPC is connected, it will prompt the user to respond with whether or not they would like to start scanning for the ```Initalized``` event in the contract that was specified as the ```JOEPEG_ADDRESS``` in the ```.env``` file. Respond ```yes``` here as well if you are ready to get Lazy.
 

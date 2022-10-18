@@ -57,6 +57,9 @@ If you would like to use more Nodes or Private Keys to mint, you can add them in
 ```LazyBoy(private_key=os.getenv(<PRIVATE_KEY_NAME>))```
 
 ## Usage
+
+![Bot](img/bot.jpg)
+
 Once you have made sure that everything has been configured using the above steps, you are all set to begin minting with the Lazy Boyz. To start the script you can use either:
 
 ```python lazy_boy_minter.py```

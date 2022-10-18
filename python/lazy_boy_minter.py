@@ -5,17 +5,12 @@ import asyncio
 import textwrap
 
 from multiprocessing import Process
-from eth_account    import Account
-from web3           import Web3
-from dotenv         import load_dotenv
-from joepeg_abi     import JOEPEG_ABI
-from colorama       import Fore, Back, Style
-from utils          import print_banner, dim_text
-
-def dim(text):
-     print(Fore.DIM + text)
-
-load_dotenv()
+from eth_account     import Account
+from joepeg_abi      import JOEPEG_ABI
+from colorama        import Fore, Back, Style
+from dotenv          import load_dotenv
+from utils           import print_banner, dim_text
+from web3            import Web3
 
     ########################
     #   1. Initial Setup   #
@@ -34,6 +29,8 @@ load_dotenv()
 # LazyBoy(private_key=os.getenv(<PRIVATE_KEY_NAME>))
 # Nodes:
 # Node(os.getenv(<NODE_ADDRESS_NAME>))
+
+load_dotenv()
 
 mint_address = os.getenv("JOEPEG_ADDRESS")
 

@@ -1,4 +1,4 @@
-# Lazy Boy Minter
+# Lazy Boy Minter 💤
 Minting is fun until you realize you're competing against scripts. If you can't beat 'em, join 'em. *beep boop bop*
 
 ## How does it work?

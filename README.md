@@ -20,6 +20,9 @@ For even better probability, one could configure as many different RPC nodes and
 **More Attempts = More Tx Spam = Higher Probability of Success**
 
 ## Setup
+
+![Setup](img/setup.gif)
+
 The Lazy Boy Minter is written in Python and as such, requires minimal setup to get going. However, there are still external libraries that you will need both Python and ```pip``` installed on your machine in order to retrieve. These include:
 
 **Necessary packages**

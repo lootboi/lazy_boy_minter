@@ -1,6 +1,8 @@
 # Lazy Boy Minter 💤
 Minting is fun until you realize you're competing against scripts. If you can't beat 'em, join 'em. *beep boop bop*
 
+![This is a Lazy Boy](img/sleepy_boy.png)
+
 ## How does it work?
 The script requires 3 main components in order to be successful:
 1. **Lazy Boyz** - Private Keys that you must provide in order for the script to call information on chain as well as transact

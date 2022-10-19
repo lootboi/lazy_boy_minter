@@ -1,5 +1,5 @@
 # Lazy Boy Minter 💤
-Minting is fun until you realize you're competing against scripts. If you can't beat 'em, join 'em. *beep boop bop*
+Minting is fun until you realize you're competing against scripts. If you can't beat 'em, join 'em. *beep boop bop* [Currently reworking mint/scan for parallel processing]
 
 ![Lazy Boy Banner](img/lazy_banner.png)
 

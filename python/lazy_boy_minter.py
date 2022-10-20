@@ -3,14 +3,16 @@ import os
 import collections
 import asyncio
 import textwrap
+import time
+import concurrent.futures
 
-from multiprocessing import Process
 from eth_account     import Account
-from joepeg_abi      import JOEPEG_ABI
+from flatlaunchpeg   import FLATLAUNCHPEG_ABI
 from colorama        import Fore, Back, Style
 from dotenv          import load_dotenv
 from utils           import print_banner, dim_text
 from web3            import Web3
+from web3.types      import TxParams
 
     ########################
     #   1. Initial Setup   #
@@ -52,8 +54,8 @@ Nodes = (
     Node(address=os.getenv("RPC_ONE")),
     Node(address=os.getenv("RPC_TWO")),
     Node(address=os.getenv("RPC_THREE")),
-    Node(address=os.getenv("RPC_FOUR")),
-    Node(address=os.getenv("RPC_FIVE")),
+    # Node(address=os.getenv("RPC_FOUR")),
+    # Node(address=os.getenv("RPC_FIVE")),
     Node(address=os.getenv("RPC_SIX")),
 )
 
@@ -233,7 +235,7 @@ print_wallet_balances()
 
 
     ############################
-    #   3. Connect to Contract #
+    #  3. Connect to Contract  #
     ############################
 
 
@@ -241,10 +243,10 @@ print_wallet_balances()
 # This for function creates a unique contract object using all of the w3 instances
 # This is done so that we can call the contract functions using each different Node + Signer
 
-contract = []
+contracts = []
 def configure_contract():
     for i in range(len(w3)):
-        contract.append(w3[i].eth.contract(address=mint_address, abi=JOEPEG_ABI))
+        contracts.append(w3[i].eth.contract(address=mint_address, abi=FLATLAUNCHPEG_ABI))
     print()
     print(Fore.GREEN + ('JoePeg Contract Configured ✓'))
     print()
@@ -254,44 +256,81 @@ def configure_contract():
 configure_contract()
 
 
+nonces = [w3[0].eth.get_transaction_count(accounts[0].address), w3[0].eth.get_transaction_count(accounts[1].address), w3[0].eth.get_transaction_count(accounts[2].address)]
+
+def mint():
+    nonce_array = nonces
+    gas_limit = 300_000
+    max_gas_in_gwei = 300
+    gas_tip_in_gwei = 50
+    mint_amount = 1
+    for i in range(len(contracts)):
+        for j in range(len(accounts)):
+            print('Attempting to mint with ' + str(accounts[j].address))
+            print('Account Nonce: ' + str(nonce_array[j]))
+
+            contract_function = contracts[i].functions.allowlistMint(mint_amount)
+            tx = contract_function.buildTransaction({
+                'from': accounts[j].address,
+                'type': 0x2,
+                'chainId': w3[0].eth.chain_id,
+                'gas': gas_limit,
+                'maxFeePerGas': Web3.toWei(max_gas_in_gwei, 'gwei'),
+                'maxPriorityFeePerGas': Web3.toWei(gas_tip_in_gwei, 'gwei'),
+                'nonce': w3[i].eth.get_transaction_count(accounts[j].address),
+                'value': 0
+            })
+            signed_tx = w3[i].eth.account.sign_transaction(tx, private_key=LazyBoyz[j].private_key)
+            try:
+                tx_hash = w3[i].eth.send_raw_transaction(signed_tx.rawTransaction)
+                print(Fore.YELLOW + 'Transaction Hash: ' + str(tx_hash.hex()) + ' | ' + 'Node: ' + str(i) + ' | ' + 'Account: ' + str(j))
+            except:
+                print(Fore.RED + 'Transaction Failed')
+
+
+
 
     ############################
     #    4. Scan for Start     #
     ############################
+
+
 
 #NOTE:
 # This function is used to tell the script what to do once the 'Initialized' 
 # event is found in the latest block. It notifies the user that the sale has started
 # and then calls the mint function
 
-def handle_event():
-    print(Fore.BLUE + ('JoePeg Sale Started ✓'))
-    # mint()
-
-# NOTE:
-# This function is used to scan for the 'Initialized' event in the latest block
-# If the event is found, then the handle_event() function is called
+def handle_event(event):
+    print(event)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(mint(), contracts)
 
 async def log_loop(event_filter, poll_interval):
     while True:
-        for Initialized in event_filter.get_new_entries():
+        print("Polling...")
+        for Initialized in event_filter.get_all_entries():
             handle_event(Initialized)
-        await asyncio.sleep(poll_interval)
+        # We also scan the allowlistStartTime as well in case the filter misses an event
+        phase = contracts[0].functions.currentPhase().call()
+        if phase > 0:
+            print(Fore.GREEN + 'Sale has started! Minting...')
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                executor.map(mint())
+        await asyncio.sleep(poll_interval, contracts)
 
-# NOTE:
-# This function is used to create a filter for the 'Initialized' event
-# It then calls the log_loop() function to scan for the event
+def listen_loop():
+    event_filter = contracts[0].events.Initialized.createFilter(fromBlock='latest')
+    loop = asyncio.get_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        print('Starting event loop')
+        loop.run_until_complete(
+            asyncio.gather(
+                log_loop(event_filter, 0.5)))
+    finally:
+        loop.close()
 
-def scan():
-    for i in range(len(contract)):
-        event_filter = contract[i].events.Initialized.createFilter(fromBlock='latest')
-        loop = asyncio.get_event_loop()
-        try:
-            loop.run_until_complete(
-                asyncio.gather(
-                    log_loop(event_filter, 0.1)))
-        finally:
-            loop.close()
 
 # NOTE:
 # This function just asks the user if they want to start scanning for the start of the sale
@@ -308,8 +347,8 @@ def start_scan():
         exit()
     elif continue_script == 'yes':
         print()
-        print(Fore.BLUE + ('Starting to scan for JoePegs...'))
-        scan()
+        print(Fore.BLUE + ('Starting to scan:'))
+        listen_loop()
     else:
         print('Please enter "yes" or "no"')
         start_scan()
@@ -320,12 +359,6 @@ start_scan()
     ######################
     #      5. Mint!      #
     ######################
-
-
-# NOTE:
-# Now that the sale has started, we can begin to mint using each Lazy Boy and signer
-def mint():
-    print(Fore.BLUE + ('Minting JoePegs...'))
 
 
 

@@ -1,18 +1,14 @@
-import multiprocessing
 import os
 import collections
 import asyncio
-import textwrap
-import time
 import concurrent.futures
 
 from eth_account     import Account
 from flatlaunchpeg   import FLATLAUNCHPEG_ABI
 from colorama        import Fore, Back, Style
 from dotenv          import load_dotenv
-from utils           import print_banner, dim_text
+from utils           import print_banner
 from web3            import Web3
-from web3.types      import TxParams
 
     ########################
     #   1. Initial Setup   #
@@ -55,7 +51,7 @@ Nodes = (
     Node(address=os.getenv("RPC_TWO")),
     Node(address=os.getenv("RPC_THREE")),
     # Node(address=os.getenv("RPC_FOUR")),
-    # Node(address=os.getenv("RPC_FIVE")),
+    Node(address=os.getenv("RPC_FIVE")),
     Node(address=os.getenv("RPC_SIX")),
 )
 
@@ -255,11 +251,15 @@ def configure_contract():
 
 configure_contract()
 
+    ######################
+    #      5. Mint!      #
+    ######################
 
-nonces = [w3[0].eth.get_transaction_count(accounts[0].address), w3[0].eth.get_transaction_count(accounts[1].address), w3[0].eth.get_transaction_count(accounts[2].address)]
+# NOTE:
+# This function uses two for loops to iterate through the Lazy boys list and the contract objects
+# The function then calls the allowlistMint function for each contract object
 
 def mint():
-    nonce_array = nonces
     gas_limit = 300_000
     max_gas_in_gwei = 300
     gas_tip_in_gwei = 50
@@ -267,8 +267,6 @@ def mint():
     for i in range(len(contracts)):
         for j in range(len(accounts)):
             print('Attempting to mint with ' + str(accounts[j].address))
-            print('Account Nonce: ' + str(nonce_array[j]))
-
             contract_function = contracts[i].functions.allowlistMint(mint_amount)
             tx = contract_function.buildTransaction({
                 'from': accounts[j].address,
@@ -356,9 +354,7 @@ def start_scan():
 start_scan()
 
 
-    ######################
-    #      5. Mint!      #
-    ######################
+
 
 
 

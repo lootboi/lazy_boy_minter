@@ -5,7 +5,7 @@ import concurrent.futures
 
 from eth_account     import Account
 from flatlaunchpeg   import FLATLAUNCHPEG_ABI
-from colorama        import Fore, Back, Style
+from colorama        import Fore, Style
 from dotenv          import load_dotenv
 from utils           import print_banner
 from web3            import Web3
@@ -50,9 +50,9 @@ Nodes = (
     Node(address=os.getenv("RPC_ONE")),
     Node(address=os.getenv("RPC_TWO")),
     Node(address=os.getenv("RPC_THREE")),
-    # Node(address=os.getenv("RPC_FOUR")),
+    Node(address=os.getenv("RPC_FOUR")),
     Node(address=os.getenv("RPC_FIVE")),
-    Node(address=os.getenv("RPC_SIX")),
+    # Node(address=os.getenv("RPC_SIX")),
 )
 
 # NOTE:
@@ -205,11 +205,11 @@ def print_wallet_balances():
     for i in range(len(accounts)):
         if w3[i].eth.get_balance(accounts[i].address) == 0:
             unfunded = unfunded + 1
-            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.RED + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '      |')
+            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.RED + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '    |')
             print('|==============================================================|')
         else:
             funded = funded + 1
-            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.GREEN + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '      |')
+            print('| ' + Style.RESET_ALL + Fore.WHITE + str(accounts[i].address) + Style.RESET_ALL + Fore.YELLOW + ' |     ' + Style.RESET_ALL + Fore.GREEN + str(w3[i].fromWei(w3[i].eth.get_balance(accounts[i].address), 'ether')) + ' AVAX' + Style.RESET_ALL + Fore.YELLOW + '    |')
             print('|==============================================================|')
     print(Fore.YELLOW + '| ' + Fore.BLUE + 'Funded Wallets: ' + Fore.YELLOW + str(funded) + '                                            |')
     print(Fore.YELLOW + '|--------------------------------------------------------------|')
@@ -295,21 +295,23 @@ def mint():
 
 
 #NOTE:
-# This function is used to tell the script what to do once the 'Initialized' 
-# event is found in the latest block. It notifies the user that the sale has started
-# and then calls the mint function
+# These next few functions scan for the Initialized() event in the JoePeg Contract
+# Once this event is found, we know to begin minting with our wallets
 
 def handle_event(event):
     print(event)
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.map(mint(), contracts)
 
+#NOTE:
+# The listener function itself
+
 async def log_loop(event_filter, poll_interval):
     while True:
         print("Polling...")
         for Initialized in event_filter.get_all_entries():
             handle_event(Initialized)
-        # We also scan the allowlistStartTime as well in case the filter misses an event
+        # We also check the currentPhase in case the listener somehow gets derailed and misses the event
         phase = contracts[0].functions.currentPhase().call()
         if phase > 0:
             print(Fore.GREEN + 'Sale has started! Minting...')

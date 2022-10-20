@@ -90,24 +90,6 @@ print()
 w3 = [Web3(Web3.HTTPProvider(node.address)) for node in Nodes]
 # accounts =  an in instance of each account
 accounts = [Account.from_key(lazy.private_key) for lazy in LazyBoyz]
-# signers  = an instance of each signer built using accounts & w3
-signers = []
-
-def get_signers():
-    signer_count = 0
-    for i in range(len(w3)):
-        for i in range(len(accounts)):
-            signers.append(w3[i].eth.account.signTransaction)
-            signer_count = signer_count + 1
-    print(Fore.GREEN + ('All Lazy Boyz Configured ✓'))
-    print()
-    print(Fore.BLUE + 'Configured ' + str(signer_count) + ' Signers Successfully ✓')
-    print()
-    print(Fore.YELLOW + ('Testing RPC Nodes...'))
-    print()
-
-get_signers()
-
 
 # NOTE:
 # This serves as a test to see that all of signers are configured correctly
